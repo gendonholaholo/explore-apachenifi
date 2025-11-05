@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Handbook Apache NiFi</title>
+  <style>
+    body {font-family: "Segoe UI", Arial, sans-serif; margin: 0; background: #f4f6fb; color: #1f2430;}
+    header {background: linear-gradient(135deg, #0b4f8c, #1685d8); color: #fff; padding: 48px 32px; text-align: center;}
+    header h1 {margin: 0; font-size: 36px; letter-spacing: 0.5px;}
+    header p {margin: 12px 0 0; font-size: 16px; opacity: 0.9;}
+    main {max-width: 980px; margin: -32px auto 40px; background: #fff; border-radius: 18px; box-shadow: 0 20px 50px rgba(13, 39, 80, 0.18); padding: 40px 56px;}
+    nav {margin-bottom: 36px;}
+    nav h2 {font-size: 20px; margin-bottom: 16px; color: #0d3b66;}
+    nav ol {list-style: decimal inside; padding-left: 0; margin: 0;}
+    nav li {margin-bottom: 10px;}
+    nav a {color: #0d3b66; text-decoration: none;}
+    nav a:hover {text-decoration: underline;}
+    h2 {font-size: 26px; margin-top: 48px; color: #0d3b66;}
+    h3 {font-size: 20px; margin-top: 28px; color: #1f2430;}
+    p {margin: 14px 0; line-height: 1.7;}
+    ul {margin: 12px 0 12px 22px;}
+    li {margin-bottom: 8px;}
+    table {width: 100%; border-collapse: collapse; margin: 18px 0;}
+    th, td {border: 1px solid #dde3ec; padding: 10px 14px; text-align: left;}
+    th {background: #eef3fb; font-weight: 600;}
+    .callout {border-left: 4px solid #1685d8; background: #f0f6ff; padding: 14px 18px; margin: 20px 0; border-radius: 6px;}
+    .badge {display: inline-block; padding: 4px 10px; border-radius: 12px; background: #edf5ff; color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; margin-right: 8px;}
+    footer {margin-top: 56px; text-align: center; font-size: 13px; color: #6b7485;}
+    sup a {color: #1685d8; text-decoration: none;}
+    sup a:hover {text-decoration: underline;}
+    @media print {
+      body {background: #fff;}
+      main {box-shadow: none; margin: 0; border-radius: 0;}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Handbook Apache NiFi</h1>
+    <p>Edisi 2024 · Panduan praktis untuk merancang, mengoperasikan, dan mengamankan dataflow NiFi di lingkungan enterprise.</p>
+  </header>
+  <main>
+    <nav>
+      <h2>Daftar Isi</h2>
+      <ol>
+        <li><a href="#pendahuluan">Pendahuluan</a></li>
+        <li><a href="#arsitektur">Arsitektur &amp; Komponen</a></li>
+        <li><a href="#persiapan">Persiapan Lingkungan</a></li>
+        <li><a href="#pengembangan">Dasar-Dasar Pengembangan Alur</a></li>
+        <li><a href="#operasional">Operasional &amp; Administrasi</a></li>
+        <li><a href="#keamanan">Keamanan &amp; Kepatuhan</a></li>
+        <li><a href="#integrasi">Integrasi &amp; Ekosistem</a></li>
+        <li><a href="#praktik">Praktik Terbaik &amp; Optimasi</a></li>
+        <li><a href="#troubleshooting">Troubleshooting &amp; Observabilitas</a></li>
+        <li><a href="#lifecycle">Siklus Hidup &amp; Versioning Alur</a></li>
+        <li><a href="#lampiran">Lampiran: Checklist Implementasi</a></li>
+        <li><a href="#referensi">Referensi</a></li>
+      </ol>
+    </nav>
+
+    <section id="pendahuluan">
+      <span class="badge">Ringkasan</span>
+      <h2>Pendahuluan</h2>
+      <p>Apache NiFi adalah platform orkestrasi dataflow yang mendukung integrasi streaming maupun batch dengan antarmuka visual drag-and-drop, kontrol backpressure, serta provenance tingkat elemen data.<sup><a href="#ref-1">[1]</a></sup> Dikembangkan dari proyek NSA Niagarafiles, NiFi menekankan keamanan, audit trail, dan otomasi integrasi heterogen.<sup><a href="#ref-2">[2]</a></sup></p>
+      <div class="callout">
+        <strong>Nilai kunci NiFi:</strong>
+        <ul>
+          <li>Desain alur visual mempercepat iterasi dan kolaborasi lintas peran.</li>
+          <li>FlowFile provenance memberi visibilitas end-to-end dan memenuhi kebutuhan audit.</li>
+          <li>Ekosistem konektor luas; mudah diintegrasikan dengan Kafka, S3, database, REST API, dan sistem lama.</li>
+          <li>Dukungan cluster dan failover memastikan ketahanan pada skala enterprise.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="arsitektur">
+      <span class="badge">Inti Platform</span>
+      <h2>Arsitektur &amp; Komponen</h2>
+      <h3>Lapisan Utama</h3>
+      <ul>
+        <li><strong>UI &amp; REST API:</strong> Menyediakan kontrol manajemen alur, pengaturan, dan automasi via skrip.<sup><a href="#ref-2">[2]</a></sup></li>
+        <li><strong>Runtime Cluster:</strong> Kumpulan node yang berbagi Zookeeper untuk koordinasi leader, balancing, dan state cluster.<sup><a href="#ref-4">[4]</a></sup></li>
+        <li><strong>Repositori:</strong> FlowFile Repository (metadata), Content Repository (payload), dan Provenance Repository (jejak data) menyimpan status tahan gangguan.<sup><a href="#ref-4">[4]</a></sup></li>
+      </ul>
+
+      <h3>Ekstensi &amp; Komponen</h3>
+      <ul>
+        <li><strong>Processor:</strong> Unit kerja utama untuk ingest, transform, routing, enrichment.<sup><a href="#ref-3">[3]</a></sup></li>
+        <li><strong>Controller Service:</strong> Konteks bersama (koneksi DB, schema registry) agar konfigurasi lintas processor konsisten.<sup><a href="#ref-3">[3]</a></sup></li>
+        <li><strong>Reporting Task:</strong> Publikasi metrik dan health ke sistem eksternal.</li>
+        <li><strong>Parameter Provider &amp; Context:</strong> Variabel lingkungan yang mendukung multi-stage deployment.</li>
+      </ul>
+
+      <h3>Pemetaan Repositori</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Repositori</th>
+            <th>Peran</th>
+            <th>Catatan Operasional</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>FlowFile</td>
+            <td>Merekam metadata FlowFile (UUID, atribut, status antrian).</td>
+            <td>Gunakan storage cepat untuk meminimalkan recovery time.<sup><a href="#ref-4">[4]</a></sup></td>
+          </tr>
+          <tr>
+            <td>Content</td>
+            <td>Menyimpan payload biner setiap FlowFile.</td>
+            <td>Pertimbangkan volume besar; dukung multiple directory untuk sebar beban IO.<sup><a href="#ref-4">[4]</a></sup></td>
+          </tr>
+          <tr>
+            <td>Provenance</td>
+            <td>Audit trail setiap peristiwa data.</td>
+            <td>Atur retensi sesuai kebutuhan audit; gunakan repositori terdistribusi bila volume tinggi.<sup><a href="#ref-4">[4]</a></sup></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="persiapan">
+      <span class="badge">Setup</span>
+      <h2>Persiapan Lingkungan</h2>
+      <h3>Prasyarat Sistem</h3>
+      <ul>
+        <li>Java 21 (atau versi LTS terbaru yang didukung NiFi) wajib untuk runtime dan build.<sup><a href="#ref-4">[4]</a></sup></li>
+        <li>Python 3.9–3.12 diperlukan jika menggunakan processor berbasis Python (beta).</li>
+        <li>Sistem operasi: Linux, Unix, Windows, macOS; pilih OS seragam di cluster.<sup><a href="#ref-4">[4]</a></sup></li>
+      </ul>
+
+      <h3>Instalasi Singkat</h3>
+      <ol>
+        <li>Unduh distribusi biner dari <em>NiFi Downloads</em> dan ekstrak ke direktori target.</li>
+        <li>Konfigurasi `conf/nifi.properties`, set minimal `nifi.sensitive.props.key` serta endpoint Site-to-Site bila diperlukan.<sup><a href="#ref-4">[4]</a></sup></li>
+        <li>Mulai layanan dengan `./bin/nifi.sh start` (Linux/macOS) atau `.in\nifi.cmd start` (Windows).</li>
+      </ol>
+
+      <h3>Tuning Dasar</h3>
+      <ul>
+        <li>Atur `nifi.bored.yield.duration` dan `nifi.queue.backpressure.*` sesuai pola beban.<sup><a href="#ref-5">[5]</a></sup></li>
+        <li>Gunakan direktori terpisah untuk setiap repositori guna memisahkan pola IO.<sup><a href="#ref-5">[5]</a></sup></li>
+        <li>Konfigurasikan Zookeeper eksternal untuk cluster produksi.</li>
+      </ul>
+    </section>
+
+    <section id="pengembangan">
+      <span class="badge">Desain Alur</span>
+      <h2>Dasar-Dasar Pengembangan Alur</h2>
+      <h3>Prinsip Rancangan</h3>
+      <ul>
+        <li>Mulai dari input → transformasi → output; definisikan skema atribut utama sejak awal.<sup><a href="#ref-2">[2]</a></sup></li>
+        <li>Kelompokkan processor ke dalam komponen logis menggunakan label dan funnel untuk kebersihan UI.</li>
+        <li>Gunakan Parameter Context untuk memisahkan konfigurasi antar lingkungan (dev, staging, prod).<sup><a href="#ref-2">[2]</a></sup></li>
+      </ul>
+
+      <h3>Membangun Processor Khusus</h3>
+      <p>Ketika processor bawaan tidak mencukupi, buat ekstensi dengan Maven archetype NiFi, bungkus sebagai NAR, dan gunakan plugin `nifi-nar-maven-plugin` versi selaras dengan runtime.<sup><a href="#ref-8">[8]</a></sup></p>
+      <h3>Pengujian &amp; Validasi</h3>
+      <ul>
+        <li>Manfaatkan fitur <em>Data Provenance replay</em> untuk menguji ulang cabang alur.</li>
+        <li>Simulasikan lonjakan beban dengan generator data; evaluasi backpressure dan prioritas antrian.</li>
+        <li>Gunakan teknologi sandbox (Docker Compose/mini cluster) sebelum menyentuh produksi.</li>
+      </ul>
+    </section>
+
+    <section id="operasional">
+      <span class="badge">Ops</span>
+      <h2>Operasional &amp; Administrasi</h2>
+      <h3>Manajemen Cluster</h3>
+      <ul>
+        <li>Gunakan Zookeeper untuk koordinasi cluster, pemilihan primer, dan state replikasi.<sup><a href="#ref-4">[4]</a></sup></li>
+        <li>Aktifkan load balancing pada koneksi antar processor untuk distribusi otomatis.</li>
+        <li>Monitoring: Reporting Task ke Prometheus, JMS, atau syslog untuk visibilitas real-time.<sup><a href="#ref-2">[2]</a></sup></li>
+      </ul>
+      <h3>Transfer AntarniFi</h3>
+      <p>Gunakan protokol Site-to-Site untuk memindahkan FlowFile antar instance/cluster dengan aman dan efisien; dukungan handshake versi memastikan kompatibilitas dan failover otomatis.<sup><a href="#ref-6">[6]</a></sup></p>
+
+      <h3>Pemeliharaan</h3>
+      <ul>
+        <li>Set jadwal backup flow configuration (`flow.json.gz`) dan repositori secara berkala.</li>
+        <li>Pantau ukuran repositori; gunakan rolling restart untuk penerapan patch.</li>
+        <li>Automasi operasi rutin melalui REST API atau NiFi Toolkit CLI.</li>
+      </ul>
+    </section>
+
+    <section id="keamanan">
+      <span class="badge">Security</span>
+      <h2>Keamanan &amp; Kepatuhan</h2>
+      <h3>Konfigurasi HTTPS &amp; Otentikasi</h3>
+      <ul>
+        <li>Aktifkan HTTPS lebih dahulu; lakukan binding ke 127.0.0.1 hanya pada tahap awal untuk meminimalkan risiko.<sup><a href="#ref-4">[4]</a></sup></li>
+        <li>Gunakan TLS mutual auth atau OIDC/SAML untuk otentikasi terpusat.</li>
+      </ul>
+
+      <h3>Otorisasi &amp; Multi-Tenancy</h3>
+      <ul>
+        <li>Kelola akses melalui policy berbasis komponen, assign role minimal.</li>
+        <li>Gunakan Parameter Sensitive dan <em>Secure Hashicorp Vault</em> atau HSM untuk rahasia.</li>
+      </ul>
+
+      <h3>Hardening</h3>
+      <ul>
+        <li>Restriksi akses shell ke user layanan NiFi saja.<sup><a href="#ref-5">[5]</a></sup></li>
+        <li>Batasi outbound processor hanya ke destinasi tepercaya.</li>
+        <li>Aktifkan audit log eksternal (SIEM) untuk kepatuhan.</li>
+      </ul>
+    </section>
+
+    <section id="integrasi">
+      <span class="badge">Ekosistem</span>
+      <h2>Integrasi &amp; Ekosistem</h2>
+      <h3>Konektor Umum</h3>
+      <ul>
+        <li>Streaming: Kafka, MQTT, JMS.</li>
+        <li>Cloud Storage: S3, GCS, Azure Blob.</li>
+        <li>Analitik: Hive, Snowflake, Elasticsearch.</li>
+        <li>API: InvokeHTTP, ListenHTTP, WebSocket listener.<sup><a href="#ref-2">[2]</a></sup></li>
+      </ul>
+
+      <h3>Integrasi Registri &amp; CI/CD</h3>
+      <p>Gunakan NiFi Registry sebagai repositori versi alur dan orchestrate deployment via NiFi Toolkit serta pipeline CI/CD (Jenkins, GitLab CI).<sup><a href="#ref-7">[7]</a><a href="#ref-9">[9]</a></sup></p>
+    </section>
+
+    <section id="praktik">
+      <span class="badge">Optimasi</span>
+      <h2>Praktik Terbaik &amp; Optimasi</h2>
+      <h3>Desain &amp; Kinerja</h3>
+      <ul>
+        <li>Minimalkan penggunaan skrip berat; pilih processor native untuk kinerja lebih baik.<sup><a href="#ref-5">[5]</a></sup></li>
+        <li>Gunakan <em>Connection Prioritizer</em> bila SLA memerlukan pemrosesan prioritas tertentu.</li>
+        <li>Implementasikan <em>backpressure threshold</em> sesuai parameter downstream.</li>
+      </ul>
+
+      <h3>Pengembangan Ekstensi</h3>
+      <ul>
+        <li>Bangun sekali untuk banyak versi NiFi dengan menjaga kompatibilitas minor.<sup><a href="#ref-8">[8]</a></sup></li>
+        <li>Pisahkan API dan implementasi NAR untuk menghindari konflik dependensi.</li>
+      </ul>
+    </section>
+
+    <section id="troubleshooting">
+      <span class="badge">Support</span>
+      <h2>Troubleshooting &amp; Observabilitas</h2>
+      <h3>Pendekatan Diagnostik</h3>
+      <ul>
+        <li>Gunakan Data Provenance untuk melacak transformasi FlowFile per event.<sup><a href="#ref-2">[2]</a></sup></li>
+        <li>Analisis log `nifi-app.log`, `nifi-bootstrap.log`, dan log GC untuk isu performa.</li>
+        <li>Aktifkan <em>bulletin reporting</em> agar notifikasi error penting muncul di UI.</li>
+      </ul>
+
+      <h3>Pemecahan Masalah Umum</h3>
+      <ul>
+        <li><strong>Backpressure terus aktif:</strong> periksa kapasitas downstream, tambah node, atau optimalkan batch size.</li>
+        <li><strong>Gagal terhubung Site-to-Site:</strong> validasi firewall, TLS truststore, dan port remote.<sup><a href="#ref-6">[6]</a></sup></li>
+        <li><strong>Upgrade cluster:</strong> lakukan rolling upgrade dan verifikasi kompatibilitas NAR eksternal terlebih dahulu.<sup><a href="#ref-4">[4]</a></sup></li>
+      </ul>
+    </section>
+
+    <section id="lifecycle">
+      <span class="badge">Lifecycle</span>
+      <h2>Siklus Hidup &amp; Versioning Alur</h2>
+      <h3>Flow Development Life Cycle (FDLC)</h3>
+      <ol>
+        <li><strong>Design:</strong> Prototipe di lingkungan pengembang, commit versi ke NiFi Registry bucket.<sup><a href="#ref-10">[10]</a></sup></li>
+        <li><strong>Verify:</strong> Deploy ke cluster uji, ganti Parameter Context sesuai lingkungan.</li>
+        <li><strong>Promote:</strong> Gunakan NiFi Toolkit untuk ekspor/impor flow antar environment secara otomatis.<sup><a href="#ref-9">[9]</a></sup></li>
+        <li><strong>Operate:</strong> Monitor kinerja, gunakan rollback versi bila terjadi regresi.</li>
+      </ol>
+
+      <h3>Automasi Deployment</h3>
+      <ul>
+        <li>Script NiFi Toolkit (`nifi-registry`, `nifi flow`) untuk sinkronisasi flow antar cluster.<sup><a href="#ref-9">[9]</a></sup></li>
+        <li>Integrasikan pipeline CI/CD untuk validasi otomatis (linting template, unit test skrip Groovy/Python).</li>
+      </ul>
+    </section>
+    <section id="lampiran">
+      <span class="badge">Checklist</span>
+      <h2>Lampiran: Checklist Implementasi</h2>
+      <h3>Pra-Produksi</h3>
+      <ul>
+        <li>✔️ Parameter Context terisi lengkap &amp; terenkripsi bila sensitif.</li>
+        <li>✔️ Load test minimal 2× throughput target, pantau backpressure.</li>
+        <li>✔️ Flow version tersimpan di NiFi Registry dengan metadata rilis.</li>
+      </ul>
+
+      <h3>Keamanan</h3>
+      <ul>
+        <li>✔️ HTTPS + TLS mutual auth aktif.</li>
+        <li>✔️ Policy per komponen diverifikasi (least privilege).</li>
+        <li>✔️ Audit log diteruskan ke SIEM.</li>
+      </ul>
+
+      <h3>Operasional</h3>
+      <ul>
+        <li>✔️ Backup repositori dan flow configuration tervalidasi restore-nya.</li>
+        <li>✔️ Monitoring (Prometheus/Grafana atau setara) menampilkan metrik inti.</li>
+        <li>✔️ Runbook insiden termasuk prosedur rollback versi flow.</li>
+      </ul>
+    </section>
+
+    <section id="referensi">
+      <span class="badge">Sumber</span>
+      <h2>Referensi</h2>
+      <ol>
+        <li id="ref-1"><a href="https://nifi.apache.org/overview.html">NiFi Overview – Apache NiFi</a></li>
+        <li id="ref-2"><a href="https://nifi.apache.org/user-guide.html">NiFi User Guide – Apache NiFi</a></li>
+        <li id="ref-3"><a href="https://nifi.apache.org/docs/nifi-docs/html/developer-guide.html">NiFi Developer Guide – Apache NiFi</a></li>
+        <li id="ref-4"><a href="https://nifi.apache.org/nifi-docs/administration-guide.html">NiFi System Administrator’s Guide – Apache NiFi</a></li>
+        <li id="ref-5"><a href="https://docs-archive.cloudera.com/HDPDocuments/HDF3/HDF-3.5.2/nifi-configuration-best-practices/index.html">Apache NiFi Configuration Best Practices – Cloudera</a></li>
+        <li id="ref-6"><a href="https://docs-archive.cloudera.com/cfm/2.0.1/nifi-user-guide/topics/nifi-site-to-site.html">Site-to-Site – Cloudera DataFlow Docs</a></li>
+        <li id="ref-7"><a href="https://nifi.apache.org/docs/nifi-registry-docs/">NiFi Registry Documentation – Apache NiFi</a></li>
+        <li id="ref-8"><a href="https://docs.cloudera.com/dataflow/cloud/resources/topics/cdf-custom-processors-best-practices.html">Best Practices for Custom NiFi Components – Cloudera</a></li>
+        <li id="ref-9"><a href="https://www.clearpeaks.com/versioning-nifi-flows-and-automating-their-deployment-with-nifi-registry-and-nifi-toolkit/">Versioning NiFi Flows &amp; Automation – ClearPeaks</a></li>
+        <li id="ref-10"><a href="https://medium.com/@abdelkrim.hadjidj/fdlc-towards-flow-development-life-cycle-with-nifi-registries-82e1ee866fab">FDLC with NiFi Registries – Medium</a></li>
+      </ol>
+    </section>
+
+    <footer>
+      Disusun oleh Codex · Versi 2024. Gunakan sebagai basis referensi dan sesuaikan dengan kebijakan internal organisasi Anda.
+    </footer>
+  </main>
+</body>
+</html>

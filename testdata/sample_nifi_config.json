@@ -1,0 +1,50 @@
+{
+  "flowId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "flowName": "Sample Data Processing Flow",
+  "version": "1.0.0",
+  "processors": [
+    {
+      "id": "proc-001",
+      "name": "GetFile",
+      "type": "org.apache.nifi.processors.standard.GetFile",
+      "properties": {
+        "Input Directory": "/data/input",
+        "Keep Source File": "false"
+      },
+      "status": "running"
+    },
+    {
+      "id": "proc-002",
+      "name": "ConvertRecord",
+      "type": "org.apache.nifi.processors.standard.ConvertRecord",
+      "properties": {
+        "Record Reader": "CSVReader",
+        "Record Writer": "JSONRecordSetWriter"
+      },
+      "status": "running"
+    },
+    {
+      "id": "proc-003",
+      "name": "PutFile",
+      "type": "org.apache.nifi.processors.standard.PutFile",
+      "properties": {
+        "Directory": "/data/output"
+      },
+      "status": "stopped"
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-001",
+      "source": "proc-001",
+      "destination": "proc-002",
+      "relationship": "success"
+    },
+    {
+      "id": "conn-002",
+      "source": "proc-002",
+      "destination": "proc-003",
+      "relationship": "success"
+    }
+  ]
+}

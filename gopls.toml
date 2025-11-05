@@ -1,0 +1,43 @@
+# gopls configuration file
+# Reference: https://github.com/golang/tools/blob/master/gopls/doc/settings.md
+
+[ui.completion]
+# Enable completion documentation
+usePlaceholders = true
+# Match completion items case-insensitively
+matcher = "Fuzzy"
+
+[ui.diagnostic]
+# Show diagnostics on file open and save
+diagnosticsDelay = "250ms"
+# Collect analyses for whole packages
+analysisProgressReporting = true
+
+[ui.navigation]
+# Enable symbol information on hover
+importShortcut = "Both"
+symbolMatcher = "FastFuzzy"
+
+[formatting]
+# Use goimports for organizing imports
+gofumpt = false
+local = "github.com/ghawsshafadonia/nifiparser"
+
+[ui.semanticTokens]
+# Enable semantic tokens for better syntax highlighting
+enable = true
+
+[build]
+# Specify build tags if needed
+tags = []
+# Additional build flags
+buildFlags = []
+# Environment variables for build
+env = {}
+
+# Analysis settings
+[analyses]
+# Enable various static analyses
+unusedparams = true
+shadow = true
+nilness = true
